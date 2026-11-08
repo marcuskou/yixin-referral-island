@@ -618,6 +618,7 @@ const NMEM = MEMBERS.filter(m => !m.helper).length;
 ROUTES.forEach((r,i) => r.no = 'R' + String(i+1).padStart(2,'0'));
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const isNarrow = () => innerWidth < 900;
+const EMBED = new URLSearchParams(location.search).has('embed'); // 嵌入 BNI 官網時：跳過開場導覽卡、直接逛島
 let store = {};
 try { store = JSON.parse(localStorage.getItem('yixin-island') || '{}') || {}; } catch (e) { store = {}; }
 const persist = () => { try { localStorage.setItem('yixin-island', JSON.stringify(store)); } catch (e) {} };
@@ -1511,13 +1512,15 @@ async function init() {
   $('#stMembers').textContent = NMEM; $('#stRoutes').textContent = ROUTES.length; $('#stSeats').textContent = SEATS.length;
   $('#loading').classList.add('done'); setTimeout(() => { $('#loading').hidden = true; }, 700);
   if (store.guest) { /* remembered guest stays in the form only */ guest = null; }
-  if (!store.seenIntro) showIntro(0);
-  if (!isNarrow()) logEl.dataset.collapsed = 'false';
+  if (!store.seenIntro && !EMBED) showIntro(0);
+  if (!isNarrow() && !EMBED) logEl.dataset.collapsed = 'false';
   renderLog();
   window.__islandReady = true;
   requestAnimationFrame(loop);
 }
 addEventListener('resize', resize);
+if ('ResizeObserver' in window) new ResizeObserver(() => resize()).observe(document.documentElement); // iframe 尺寸變動時重算畫布
+addEventListener('load', () => setTimeout(resize, 300));
 
 const clock = new THREE.Clock(); const vv = new THREE.Vector3(); const dObj = new THREE.Object3D(); let frame = 0, lastLight = -1;
 function loop() {
